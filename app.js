@@ -14,26 +14,32 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
 app.use(bodyParser.json())
 
-app.get('/api/user',[authMiddleware], (req, res) => {
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
+app.get('/api/user', [authMiddleware], (req, res) => {
     res.sendFile(path.join(__dirname, './json_data', 'user.json'));
 });
 
-app.post('/api/search/songName',[authMiddleware], (req, res) => {
+app.post('/api/search/songName', [authMiddleware], (req, res) => {
     console.log(req.body.name);
     let songName = req.body.name;
     const songsPath = path.join(__dirname, './json_data', 'songs.json');
     try {
         let file = fs.readFileSync(songsPath);
         file = JSON.parse(file);
-        const result = file.chart.filter((x)=> x.heading.title == songName);
+        const result = file.chart.filter((x) => x.heading.title == songName);
         res.json(result);
-        
+
     } catch (error) {
         res.json(error);
     }
 });
 
-app.get('/api/songs',[authMiddleware], (req, res) => {
+app.get('/api/songs', [authMiddleware], (req, res) => {
     // const options = {
     //     method: 'GET',
     //     url: 'https://www.shazam.com/shazam/v2/en-US/IL/web/-/tracks/world-chart-world',
@@ -48,16 +54,16 @@ app.get('/api/songs',[authMiddleware], (req, res) => {
     res.sendFile(path.join(__dirname, './json_data', 'songs.json'));
 });
 
-function authMiddleware(req, res, next){
+function authMiddleware(req, res, next) {
     try {
-      const token = req.headers.authorization.split("Bearer "); 
-      const data = jwt.verify(token[1], jwtKey);
-      if(data.email == "aviv@cycurity.com" && data.name == "aviv"){
-        next();
-      }
+        const token = req.headers.authorization.split("Bearer ");
+        const data = jwt.verify(token[1], jwtKey);
+        if (data.email == "aviv@cycurity.com" && data.name == "aviv") {
+            next();
+        }
     } catch (error) {
         console.log(error);
-        res.status(403).json({error:"Not Authorize"});
+        res.status(403).json({ error: "Not Authorize" });
     }
 }
 
